@@ -89,6 +89,7 @@ get_search_query () {
 	if [ -z "$*" ]; then
 		printf "Search Anime: "
 		read -r query
+		query=$(echo $query | sed -e 's/\s/-/g' -e 's/\(.*\)/\L\1/')
 	else
 		query=$*
 	fi
