@@ -1,7 +1,7 @@
 # ani-cli
 
 This is a fork of [pystardust's old-ani-cli](https://github.com/pystardust/ani-cli/tree/old-ani-cli)
-With [Dink4n's Fix](https://github.com/Dink4n/ani-cli) and patching for better query
+with [Dink4n's Fix](https://github.com/Dink4n/ani-cli) and patching for better query
 
 A cli to browse and watch anime.
 
