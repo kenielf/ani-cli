@@ -2,7 +2,7 @@
 
 # dependencies: grep sed curl video_player
 # video_player ( needs to be able to play urls )
-#player_fn="vlc"; player_arg=""
+#player_fn="vlc"; player_arg="--play-and-exit"
 player_fn="mpv"; player_arg=""
 
 
