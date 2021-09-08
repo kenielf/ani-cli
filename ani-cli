@@ -2,7 +2,7 @@
 
 # dependencies: grep sed curl video_player
 # video_player ( needs to be able to play urls )
-player_fn="mpv"
+player_fn="mpv"; player_arg=""
 
 prog="ani-cli"
 logfile="${XDG_CACHE_HOME:-$HOME/.cache}/ani-hsts"
@@ -198,7 +198,7 @@ open_episode () {
 			s/^${selection_id}\t[0-9]+/${selection_id}\t$((episode+1))/
 		" "$logfile" > "${logfile}.new" && mv "${logfile}.new" "$logfile"
 
-		setsid -f $player_fn "$video_url" >/dev/null 2>&1
+		setsid -f $player_fn "$player_arg" "$video_url" >/dev/null 2>&1
 	else
 		printf "Downloading episode $episode ...\n"
 		printf "%s\n" "$video_url"
