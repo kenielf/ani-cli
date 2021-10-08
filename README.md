@@ -26,7 +26,7 @@ Multiple episodes can be viewed/downloaded by giving the episode range like so
 This would open/download episodes 1 2 3 4 5 6
 
 ## Alternative Players
-###For VLC
+### For VLC
 Uncomment the line `#player_fn="vlc"; player_arg="--play-and-exit"` and comment or remove the one just below it.
 DISCLAIMER: Some anime don't seem to work with VLC thanks to what I believe is referrer business.
 
