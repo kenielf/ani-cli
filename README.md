@@ -30,6 +30,7 @@ This would open/download episodes 1 2 3 4 5 6
 Uncomment the line `#player_fn="vlc"; player_arg="--play-and-exit"` and comment or remove the one just below it.
 DISCLAIMER: Some anime don't seem to work with VLC thanks to what I believe is referrer business.
 
+### Other
 For any other player that accepts terminal input, just modify `player_fn` and `player_arg` and the setsid function to work with Referrers as well.
 
 ## Dependencies
