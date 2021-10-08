@@ -211,7 +211,13 @@ open_episode () {
 			s/^${selection_id}\t[0-9]+/${selection_id}\t$((episode+1))/
 		" "$logfile" > "${logfile}.new" && mv "${logfile}.new" "$logfile"
 
-		setsid -f $player_fn $player_arg --http-header-fields="Referer: $dpage_url" "$video_url" >/dev/null 2>&1
+		echo "$dpage_url"
+		echo "$video_url"
+		if [ "$player_fn" == "mpv" ]; then
+			setsid -f $player_fn $player_arg --http-header-fields="Referer: $dpage_url" "$video_url" >/dev/null 2>&1
+		else
+			setsid -f $player_fn $player_arg "$video_url" :http-user-agent="$dpage_url" >/dev/null 2>&1
+		fi
 	else
 		printf "Downloading episode $episode ...\n"
 		printf "%s\n" "$video_url"
