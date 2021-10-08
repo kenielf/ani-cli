@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# dependencies: grep sed curl video_player
+# dependencies: grep sed curl ffmpeg video_player
 # video_player ( needs to be able to play urls )
 #player_fn="vlc"; player_arg="--play-and-exit"
 player_fn="mpv"; player_arg=""
@@ -41,7 +41,7 @@ err () {
 
 search_anime () {
 	# get anime name along with its id
-	search=$1
+    search=$(printf '%s' "$1" | tr ' ' '-')
 	titlepattern='<a href="/category/'
 
 	curl -s "https://gogoanime.vc//search.html" \
@@ -65,26 +65,28 @@ search_eps () {
 		'
 }
 
-get_links () {
+get_dpage_link() {
 	# get the download page url
 	anime_id=$1
 	ep_no=$2
 
-	dpage_url=$(
 	curl -s "https://gogoanime.vc/$anime_id-episode-$ep_no" |
 	sed -n -E '
 		/^[[:space:]]*<li class="dowloads">/{
 		s/.*href="([^"]*)".*/\1/p
 		q
-		}')
+		}'
+}
+
+get_links () {
+	dpage_url="$1"
 
 	curl -s "$dpage_url" |
 	sed -n -E '
-		/^[[:space:]]*href="([^"]*\.mp4)".*/{
-		s/^[[:space:]]*href="([^"]*\.mp4)".*/\1/p
+		/href="([^"]*)" download>Download/{
+		s/href="([^"]*)" download>Download/\1/p
 		q
-		}
-		'
+		}' | tr -d ' '
 }
 
 dep_ch () {
@@ -100,7 +102,6 @@ get_search_query () {
 	if [ -z "$*" ]; then
 		printf "Search Anime: "
 		read -r query
-		query=$(echo $query | sed -e 's/\s/-/g' -e 's/\(.*\)/\L\1/')
 	else
 		query=$*
 	fi
@@ -177,6 +178,8 @@ open_episode () {
 	anime_id=$1
 	episode=$2
 
+	# clear the screen
+	printf '\x1B[2J\x1B[1;1H'
 	if [ $episode -lt 1 ] || [ $episode -gt $last_ep_number ]; then
 		err "Episode out of range"
 		printf "${c_blue}Choose episode $c_cyan[1-%d]$c_reset:$c_green " $last_ep_number
@@ -186,7 +189,8 @@ open_episode () {
 
 	printf "Getting data for episode %d\n" $episode
 
-	video_url=$(get_links "$anime_id" "$episode")
+	dpage_url=$(get_dpage_link "$anime_id" "$episode")
+	video_url=$(get_links "$dpage_url")
 
 	case $video_url in
 		*streamtape*)
@@ -207,14 +211,15 @@ open_episode () {
 			s/^${selection_id}\t[0-9]+/${selection_id}\t$((episode+1))/
 		" "$logfile" > "${logfile}.new" && mv "${logfile}.new" "$logfile"
 
-		setsid -f $player_fn "$player_arg" "$video_url" >/dev/null 2>&1		
+		setsid -f $player_fn $player_arg --http-header-fields="Referer: $dpage_url" "$video_url" >/dev/null 2>&1
 	else
 		printf "Downloading episode $episode ...\n"
 		printf "%s\n" "$video_url"
 		# add 0 padding to the episode name
 		episode=$(printf "%03d" $episode)
 		{
-			curl -L -# -C - "$video_url" -o "${anime_id}-${episode}.mp4" &&
+			ffmpeg -headers "Referer: $dpage_url" -i "$video_url" \
+				-codec copy "${anime_id}-${episode}.mkv" >/dev/null 2>&1 &&
 				printf "${c_green}Downloaded episode: %s${c_reset}\n" "$episode" ||
 				printf "${c_red}Download failed episode: %s${c_reset}\n" "$episode"
 		}
@@ -296,6 +301,7 @@ while :; do
 	printf "$c_blue[${c_cyan}%s$c_blue] $c_yellow%s$c_reset\n" "n" "next episode"
 	printf "$c_blue[${c_cyan}%s$c_blue] $c_magenta%s$c_reset\n" "p" "previous episode"
 	printf "$c_blue[${c_cyan}%s$c_blue] $c_yellow%s$c_reset\n" "s" "select episode"
+	printf "$c_blue[${c_cyan}%s$c_blue] $c_magenta%s$c_reset\n" "r" "replay current episode"
 	printf "$c_blue[${c_cyan}%s$c_blue] $c_red%s$c_reset\n" "q" "exit"
 	printf "${c_blue}Enter choice:${c_green} "
 	read choice
@@ -314,7 +320,9 @@ while :; do
 			[ "$episode" -eq "$episode" ] 2>/dev/null || die "Invalid number entered"
 			;;
 
-		q) 
+		r) ;;
+
+		q)
 			break;;
 
 		*)
